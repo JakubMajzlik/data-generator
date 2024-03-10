@@ -7,9 +7,27 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.isAccessible
 
-object TestDataGenerator {
+/**
+ * This is a simple data generator for Kotlin classes and data classes.
+ * It generates random values for all properties of a given class.
+ * It supports all primitive types and nested classes.
+ *
+ * The generator is not meant to be used in production.
+ * It's mainly for testing purposes and to help you to get started with your tests.
+ *
+ * Example usage:
+ * ```kotlin
+ * val data = DataGenerator.generateTestData(SomeClass::class)
+ * ```
+ */
+object DataGenerator {
 
-    fun <T: Any> generateTestData(kClass: KClass<T>): T {
+    /**
+     * Generates random data for a given class.
+     * @param kClass The class for which the data should be generated.
+     * @return An instance of the given class with random data.
+     */
+    fun <T: Any> generateData(kClass: KClass<T>): T {
         return when {
             kClass.javaPrimitiveType != null -> generatePrimitiveType(kClass)
             else -> generateObjectType(kClass)
@@ -51,28 +69,11 @@ object TestDataGenerator {
             Map::class -> mapOf(generateValueForType(type.arguments[0].type!!) to generateValueForType(type.arguments[1].type!!))
             else -> {
                 if ((type.classifier as? KClass<*>)?.isData == true) {
-                    generateTestData(type.classifier as KClass<*>)
+                    generateData(type.classifier as KClass<*>)
                 } else {
                     throw IllegalArgumentException("Cannot generate value for type: $type The type is unsupported")
                 }
             }
         }
     }
-}
-
-data class Data(
-    val id: Int = 0,
-    val name: String = "",
-    val isTest: Boolean = false,
-    val nested: NestedData = NestedData(),
-    val nestedList: MutableList<NestedData> = mutableListOf()
-)
-
-data class NestedData(
-    val id: Int = 0, val name: String = ""
-)
-
-fun main() {
-    val data = TestDataGenerator.generateTestData(Data::class)
-    println(data)
 }
