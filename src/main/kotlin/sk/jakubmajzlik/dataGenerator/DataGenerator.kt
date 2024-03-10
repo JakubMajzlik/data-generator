@@ -1,7 +1,7 @@
 package sk.jakubmajzlik.dataGenerator
 
+import sk.jakubmajzlik.dataGenerator.generationStrategy.*
 import java.util.*
-import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
@@ -10,19 +10,33 @@ import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.isAccessible
 
 /**
- * This is a simple data generator for Kotlin classes and data classes.
- * It generates random values for all properties of a given class.
- * It supports all primitive types and nested classes.
- *
- * The generator is not meant to be used in production.
- * It's mainly for testing purposes and to help you to get started with your tests.
+ * A class that generates random data for a given class.
+ * The class uses predefined strategies for primitive types and allows to register custom strategies for other classes.
  *
  * Example usage:
- * ```kotlin
- * val data = sk.jakubmajzlik.dataGenerator.DataGenerator.generateTestData(SomeClass::class)
  * ```
+ * val dataGenerator = DataGenerator()
+ * val data = dataGenerator.generateData(Data::class)
+ * ```
+ *
+ * @property strategies A map of strategies for primitive types.
+ * @constructor Creates a new instance of DataGenerator.
+ * @see GenerationStrategy
  */
-object DataGenerator {
+class DataGenerator {
+
+    private val strategies = mutableMapOf<KClass<*>, GenerationStrategy<*>>(
+        Int::class to RandomIntGenerateStrategy(),
+        Long::class to RandomLongGenerateStrategy(),
+        Float::class to RandomFloatGenerateStrategy(),
+        Double::class to RandomDoubleGenerateStrategy(),
+        Byte::class to RandomByteGenerateStrategy(),
+        Short::class to RandomShortGenerateStrategy(),
+        Char::class to RandomCharGenerateStrategy(),
+        Boolean::class to RandomBooleanGenerateStrategy(),
+        String::class to RandomStringGenerateStrategy(),
+        UUID::class to RandomUUIDGenerateStrategy()
+    )
 
     /**
      * Generates random data for a given class.
@@ -37,6 +51,7 @@ object DataGenerator {
     }
 
     private fun <T: Any> generatePrimitiveType(kClass: KClass<T>): T {
+        @Suppress("UNCHECKED_CAST")
         return generateValueForType(kClass.starProjectedType) as? T ?: error("Failed to create instance of $kClass")
     }
 
@@ -56,26 +71,22 @@ object DataGenerator {
     }
 
     private fun generateValueForType(type: KType): Any? {
-        return when (type.classifier) {
-            Int::class -> Random.nextInt()
-            Long::class -> Random.nextLong()
-            Double::class -> Random.nextDouble()
-            Float::class -> Random.nextFloat()
-            Boolean::class -> Random.nextBoolean()
-            Char::class -> Random.nextInt(33, 127).toChar()
-            Byte::class -> Random.nextBytes(1)[0]
-            Short::class -> Random.nextInt(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
-            String::class -> UUID.randomUUID().toString()
-            List::class -> listOf(generateValueForType(type.arguments[0].type!!))
-            Set::class -> setOf(generateValueForType(type.arguments[0].type!!))
-            Map::class -> mapOf(generateValueForType(type.arguments[0].type!!) to generateValueForType(type.arguments[1].type!!))
-            else -> {
-                if ((type.classifier as? KClass<*>)?.isData == true) {
-                    generateData(type.classifier as KClass<*>)
-                } else {
-                    throw IllegalArgumentException("Cannot generate value for type: $type The type is unsupported")
-                }
-            }
+        val strategy = strategies[type.classifier as KClass<*>]
+        return when {
+            strategy != null -> strategy.generateData()
+            type.classifier == List::class -> listOf(generateValueForType(type.arguments[0].type!!))
+            type.classifier == Set::class -> setOf(generateValueForType(type.arguments[0].type!!))
+            type.classifier == Map::class -> mapOf(generateValueForType(type.arguments[0].type!!) to generateValueForType(type.arguments[1].type!!))
+            else -> generateData(type.classifier as KClass<*>)
         }
+    }
+
+    /**
+     * Registers a custom generation strategy for a given class.
+     * @param kClass The class for which the strategy should be used.
+     * @param strategy The strategy to be used for the given class.
+     */
+    fun setGenerationStrategy(kClass: KClass<*>, strategy: GenerationStrategy<*>) {
+        strategies[kClass] = strategy
     }
 }

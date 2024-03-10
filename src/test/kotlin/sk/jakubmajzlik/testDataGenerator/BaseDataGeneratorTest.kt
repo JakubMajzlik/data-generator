@@ -4,49 +4,39 @@ import sk.jakubmajzlik.dataGenerator.DataGenerator
 
 class BaseDataGeneratorTest {
 
-    private data class Data(
-        val id: Int = 0,
-        val name: String = "",
-        val isTest: Boolean = false,
-        val nested: NestedData = NestedData(),
-        val nestedList: MutableList<NestedData> = mutableListOf()
-    )
-
-    private data class NestedData(
-        val id: Int = 0, val name: String = ""
-    )
-
     @Test
     fun `generateTestData creates instance of class`() {
         class SomeClass(val nullableInt: Int?, val nullableString: String?)
-        val data = DataGenerator.generateData(SomeClass::class)
+        val dataGenerator = DataGenerator()
+        val data = dataGenerator.generateData(SomeClass::class)
 
         assertTrue(data is SomeClass)
     }
 
     @Test
-    fun `generateTestData creates instance of Data class`() {
-        val data = DataGenerator.generateData(Data::class)
-        assertTrue(data is Data)
-    }
+    fun `generateTestData creates instance of nested class`() {
+        data class NestedClass(val id: Int = 0, val name: String = "")
+        data class SomeClass(val nested: NestedClass = NestedClass())
 
-    @Test
-    fun `generateTestData creates instance of NestedData class`() {
-        val nestedData = DataGenerator.generateData(NestedData::class)
-        assertTrue(nestedData is NestedData)
+
+        val dataGenerator = DataGenerator()
+        val data = dataGenerator.generateData(SomeClass::class)
+        assertTrue(data is SomeClass)
     }
 
     @Test
     fun `generateTestData handles nullable types correctly`() {
         data class NullableData(val nullableInt: Int?, val nullableString: String?)
-        val nullableData = DataGenerator.generateData(NullableData::class)
+        val dataGenerator = DataGenerator()
+        val nullableData = dataGenerator.generateData(NullableData::class)
         assertTrue(nullableData is NullableData)
     }
 
     @Test
     fun `generateTestData handles list types correctly`() {
         data class ListData(val intList: List<Int>, val stringList: List<String>)
-        val listData = DataGenerator.generateData(ListData::class)
+        val dataGenerator = DataGenerator()
+        val listData = dataGenerator.generateData(ListData::class)
         assertTrue(listData is ListData)
     }
 
@@ -61,7 +51,8 @@ class BaseDataGeneratorTest {
                 this.name = name
             }
         }
-        val noPrimaryConstructor = DataGenerator.generateData(NoPrimaryConstructor::class)
+        val dataGenerator = DataGenerator()
+        val noPrimaryConstructor = dataGenerator.generateData(NoPrimaryConstructor::class)
         assertTrue(noPrimaryConstructor is NoPrimaryConstructor)
     }
 }
