@@ -1,5 +1,6 @@
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import sk.jakubmajzlik.dataGenerator.DataGenerator
 
 class BaseDataGeneratorTest {
 

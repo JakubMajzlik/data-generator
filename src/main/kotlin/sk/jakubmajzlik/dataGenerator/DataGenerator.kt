@@ -1,3 +1,5 @@
+package sk.jakubmajzlik.dataGenerator
+
 import java.util.*
 import kotlin.random.Random
 import kotlin.reflect.KClass
@@ -17,7 +19,7 @@ import kotlin.reflect.jvm.isAccessible
  *
  * Example usage:
  * ```kotlin
- * val data = DataGenerator.generateTestData(SomeClass::class)
+ * val data = sk.jakubmajzlik.dataGenerator.DataGenerator.generateTestData(SomeClass::class)
  * ```
  */
 object DataGenerator {
